@@ -6,15 +6,25 @@ CLAM(Clustering-constrained Attention Multiple Instance Learning) codebase to id
 - Stores the nuclear spatial information(location coordinates, width, height) for each nuclear subtype in CSV files.
 - Visualization.ipynb noebook visualizes the extracted data using various plots.
 
-| Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
+<!-- | Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
 | ------------- | ------------- |
-| <img src ="C3L-01663-21_original.png" width="360" height="510" />  | <img src ="C3L-01663-21_overlayed.png" width="360" height="510" />  |
-|  | Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage |
 
-<!-- <p float="left">
-<img src ="C3L-01663-21_original.png" width="730" height="1035" />
-<img src ="C3L-01663-21_overlayed.png" width="730" height="1035" />
+| <img src ="C3L-01663-21_original.png" width="360" height="510" />  | <img src ="C3L-01663-21_overlayed.png" width="360" height="510" />  | -->
+
+<!-- |  | Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage |
+| Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
+<p float="left">
+<img src ="C3L-01663-21_original.png" width="360" height="510" />
+<img src ="C3L-01663-21_overlayed.png" width="360" height="510" />
 </p> -->
+
+Sample Input WSI Image:
+
+<img src ="C3L-01663-21_original.png" width="360" height="510" />
+
+Sample Output WSI image with different types of nuclei demarcated with different colors(Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage):
+
+<img src ="C3L-01663-21_overlayed.png" width="360" height="510" />
 
 ## Creating Environment
 
@@ -216,7 +226,12 @@ The files mentioned below are present in the Visualization folder.
     * wsi_file_path : Path to the original wsi file in svs format.
     * dataframes_path : Path to the wsi_info folder created as an output for a particular wsi containing csv and json files
 
+Sample visualization of nuclei spatial distribution data:
 
+<!-- <p float="left">
+<img src ="C3L-01663-21_original.png" width="360" height="510" />
+<img src ="C3L-01663-21_overlayed.png" width="360" height="510" />
+</p> --> -->
 
 
 
