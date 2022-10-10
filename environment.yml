@@ -1,4 +1,4 @@
-name: hovernet
+name: WSINucleiInfo
 channels:
   - conda-forge
   - defaults

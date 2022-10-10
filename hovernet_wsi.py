@@ -73,7 +73,7 @@ parser.add_argument("--level", type=int, default=0, help="level of wsi at which 
 
 parser.add_argument("--draw_grid", type=bool, default=False, help="If you want a grid on the overlay then enter True else False (default : False)")
 
-parser.add_argument("--save_path_overlay", type=bool, default=False, help="If you want to save the overlay png image of each individual patch then enter True else False (default : False)")
+parser.add_argument("--save_patch_overlay", type=bool, default=False, help="If you want to save the overlay png image of each individual patch then enter True else False (default : False)")
 
 parser.add_argument("--save_mat", type=bool, default=True, help="If you want to save a .mat file for each individual patch containing nuclei information then enter True else False (default : True). These files can be helpful for generation of training data.")
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
   patch_size = args.patch_size
   level = args.level
   draw_grid = args.draw_grid
-  save_path_overlay = args.save_path_overlay
+  save_patch_overlay = args.save_patch_overlay
   save_mat = args.save_mat
   
   wsi_list = os.listdir(input_wsi_dir) # a list of wsi images
@@ -180,7 +180,7 @@ if __name__ == '__main__':
             overlay_path_path = os.path.join(hovernet_output, "overlay", patch_name)
             heatmap = stitching.DrawMapFromCoords(overlay_path_path, heatmap, wsi, coord, patch_size_draw_coords, level, downsamples, indices=None, draw_grid = False)
 
-            if not save_path_overlay:
+            if not save_patch_overlay:
                 os.remove(overlay_path_path)
 
             #tlwh format
