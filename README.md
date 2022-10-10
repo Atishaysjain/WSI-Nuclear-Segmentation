@@ -8,12 +8,12 @@ CLAM(Clustering-constrained Attention Multiple Instance Learning) codebase to id
 
 | Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
 | ------------- | ------------- |
-| <img src ="Images/C3L-01663-21_original.png" width="292" height="414" />  | <img src ="Images/C3L-01663-21_overlayed.png" width="292" height="414" />  |
+| <img src ="C3L-01663-21_original.png" width="360" height="510" />  | <img src ="C3L-01663-21_overlayed.png" width="360" height="510" />  |
 |  | Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage |
 
 <!-- <p float="left">
-<img src ="Images/C3L-01663-21_original.png" width="730" height="1035" />
-<img src ="Images/C3L-01663-21_overlayed.png" width="730" height="1035" />
+<img src ="C3L-01663-21_original.png" width="730" height="1035" />
+<img src ="C3L-01663-21_overlayed.png" width="730" height="1035" />
 </p> -->
 
 ## Creating Environment
