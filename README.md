@@ -1,272 +1,234 @@
-# HoVer-Net: Simultaneous Segmentation and Classification of Nuclei in Multi-Tissue Histology Images
+# Nuclear Profiling pipeline returning Spatial Nuclear Distribution in Whole Slide Images(WSIs) 
 
-A multiple branch network that performs nuclear instance segmentation and classification within a single network. The network leverages the horizontal and vertical distances of nuclear pixels to their centres of mass to separate clustered cells. A dedicated up-sampling branch is used to classify the nuclear type for each segmented instance. <br />
+- Performs instance segmentation and classification of nuclei in Multi-Tissue Histology WSIs(generally 100k*100k pixels) to analyze intra-tumor heterogeneity by identifying cancerous subtypes.
+- Scaled version of the publicly available HoVer-Net codebase. Utilizes
+CLAM(Clustering-constrained Attention Multiple Instance Learning) codebase to identify diagnostically significant regions and return files with spatial data of each type of nuclei.
+- Stores the nuclear spatial information(location coordinates, width, height) for each nuclear subtype in CSV files.
+- Visualization.ipynb noebook visualizes the extracted data using various plots.
 
-[Link](https://www.sciencedirect.com/science/article/abs/pii/S1361841519301045?via%3Dihub) to Medical Image Analysis paper. <br />
+| Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
+| ------------- | ------------- |
+| <img src ="Images/C3L-01663-21_original.png" width="730" height="1035" />  | <img src ="Images/C3L-01663-21_overlayed.png" width="730" height="1035" />  |
+|  | Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage |
 
-This is the official PyTorch implementation of HoVer-Net. For the original TensorFlow version of this code, please refer to [this branch](https://github.com/vqdang/hover_net/tree/tensorflow-final). The repository can be used for training HoVer-Net and to process image tiles or whole-slide images. As part of this repository, we supply model weights trained on the following datasets:
+<!-- <p float="left">
+<img src ="Images/C3L-01663-21_original.png" width="730" height="1035" />
+<img src ="Images/C3L-01663-21_overlayed.png" width="730" height="1035" />
+</p> -->
 
-- [CoNSeP](https://www.sciencedirect.com/science/article/pii/S1361841519301045)
-- [PanNuke](https://arxiv.org/abs/2003.10778)
-- [MoNuSAC](https://ieeexplore.ieee.org/abstract/document/8880654)
-- [Kumar](https://ieeexplore.ieee.org/abstract/document/7872382)
-- [CPM17](https://www.frontiersin.org/articles/10.3389/fbioe.2019.00053/full)
-
-Links to the checkpoints can be found in the inference description below.
-
-![](docs/diagram.png)
-
-## Set Up Environment
+## Creating Environment
 
 ```
 conda env create -f environment.yml
-conda activate hovernet
+conda activate WSINucleiInfo
 pip install torch==1.6.0 torchvision==0.7.0
 ```
 
-Above, we install PyTorch version 1.6 with CUDA 10.2. 
+## Running the Code 
+### Step 1 (making changes in run_tile_standard.sh file and modify type_info.json)
 
-## Repository Structure
+1. Mandatory changes to be made in run_wsi_standard.sh :  
+    * nr_types=number_of_nuclei_types_to_predict     
+    * model_mode=fast/original 
+        * 'fast' mode must be selected for model checkpoints trained on PanNuke and MoNuSAC. 
+        * 'original' must be selected for model checkpoints trained on CoNSeP
+    * model_path=path_to_saved_model_checkpoints
+    * input_file=
 
-Below are the main directories in the repository: 
+Further options in run_wsi_standard.sh :
+```
+  -h --help                   Show this string.
+  --version                   Show version.
 
-- `dataloader/`: the data loader and augmentation pipeline
-- `docs/`: figures/GIFs used in the repo
-- `metrics/`: scripts for metric calculation
-- `misc/`: utils that are
-- `models/`: model definition, along with the main run step and hyperparameter settings  
-- `run_utils/`: defines the train/validation loop and callbacks 
-
-Below are the main executable scripts in the repository:
-
-- `config.py`: configuration file
-- `dataset.py`: defines the dataset classes 
-- `extract_patches.py`: extracts patches from original images
-- `compute_stats.py`: main metric computation script
-- `run_train.py`: main training script
-- `run_infer.py`: main inference script for tile and WSI processing
-- `convert_chkpt_tf2pytorch`: convert tensorflow `.npz` model trained in original repository to pytorch supported `.tar` format.
-
-# Running the Code
-
-## Training
-
-### Data Format
-For training, patches must be extracted using `extract_patches.py`. For instance segmentation, patches are stored as a 4 dimensional numpy array with channels [RGB, inst]. Here, inst is the instance segmentation ground truth. I.e pixels range from 0 to N, where 0 is background and N is the number of nuclear instances for that particular image. 
-
-For simultaneous instance segmentation and classification, patches are stored as a 5 dimensional numpy array with channels [RGB, inst, type]. Here, type is the ground truth of the nuclear type. I.e every pixel ranges from 0-K, where 0 is background and K is the number of classes.
-
-Before training:
-
-- Set path to the data directories in `config.py`
-- Set path where checkpoints will be saved  in `config.py`
-- Set path to pretrained Preact-ResNet50 weights in `models/hovernet/opt.py`. Download the weights [here](https://drive.google.com/file/d/1KntZge40tAHgyXmHYVqZZ5d2p_4Qr2l5/view?usp=sharing).
-- Modify hyperparameters, including number of epochs and learning rate in `models/hovernet/opt.py`.
-
-### Usage and Options
+  --gpu=<id>                  GPU list. [default: 0]
+  --type_info_path=<path>     Path to a json define mapping between type id, type name, 
+                              and expected overlay color. 
+  --nr_inference_workers=<n>  Number of workers during inference. [original value set in HoVer-Net repository : 8]
+  --nr_post_proc_workers=<n>  Number of workers during post-processing. [original value set in HoVer-Net repository: 16]
+  --batch_size=<n>            Batch size. [original value set in HoVer-Net repository: 128]
+```
  
-Usage: <br />
-```
-  python run_train.py [--gpu=<id>] [--view=<dset>]
-  python run_train.py (-h | --help)
-  python run_train.py --version
-```
+2. type_info.json is used to specify what RGB colours are used in the overlay. Make sure to modify this for different models. Therefore type_info.json file defining mapping between nuclear type id, nuclear type name, and expected nuclear overlay color.
 
-Options:
+### Step 2 (Obtaining Segmentation Coordinates)
 ```
-  -h --help       Show this string.
-  --version       Show version.
-  --gpu=<id>      Comma separated GPU list.  
-  --view=<dset>   Visualise images after augmentation. Choose 'train' or 'valid'.
+cd ./patches_utils # Go to directory patches_utils
+python create_patches_fp.py --source DATA_DIRECTORY --save_dir SEGMENTATION_DIR --patch_size 1024 --step_size 1024 --seg --patch --stitch
+cd .. # Returning to the base HoVer-Net directory 
 ```
 
-Examples:
+A sample output of the above command is stored in ./Output/Segmentation_Output/C3L-01663-21/
 
-To visualise the training dataset as a sanity check before training use:
-```
-python run_train.py --view='train'
-```
+The above command performs the following functionalities :
+* Recognizes the useful part(diagnostically significant regions) of the WSI by ignoring the redundant background surrounding the WSI
+* Returns coordinates of tiles of size patch_size*path_size so that using them we can extract tiles from WSI to pass into the HoVer-Net function for nuclei segmentation and classification
 
-To initialise the training script with GPUs 0 and 1, the command is:
-```
-python run_train.py --gpu='0,1' 
-```
+Basic flags explanation :
+* `--source` : path to folder containing raw wsi image files
+* `--save_dir` : path to the directory that will store the output data(data with tiled coordinates to divide the WSI into small tiles and perform nuclear instance segmentation and classification on them).
+* `--step_size` : step size (default = 256)
+* `--patch_size` : patch size (default = 256)
+* `--preset` : predefined profile of default segmentation and filter parameters (.csv). (default = None). 
 
-## Inference
 
-### Data Format
-Input: <br />
-- Standard images files, including `png`, `jpg` and `tiff`.
-- WSIs supported by [OpenSlide](https://openslide.org/), including `svs`, `tif`, `ndpi` and `mrxs`.
+**When passing patch_size, remember to pass in the value of step_size equal to patch_size to prevent overlapping of tiles**
 
-Output: <br />
-- Both image tiles and whole-slide images output a `json` file with keys:
-    - 'bbox': bounding box coordinates for each nucleus
-    - 'centroid': centroid coordinates for each nucleus
-    - 'contour': contour coordinates for each nucleus 
-    - 'type_prob': per class probabilities for each nucleus (default configuration doesn't output this)
-    - 'type': prediction of category for each nucleus
-- Image tiles output a `mat` file, with keys:
-    - 'raw': raw output of network (default configuration doesn't output this)
-    - 'inst_map': instance map containing values from 0 to N, where N is the number of nuclei
-    - 'inst_type': list of length N containing predictions for each nucleus
- - Image tiles output a `png` overlay of nuclear boundaries on top of original RGB image
-  
-### Model Weights
+### Model Weights 
 
-Model weights obtained from training HoVer-Net as a result of the above instructions can be supplied to process input images / WSIs. Alternatively, any of the below pre-trained model weights can be used to process the data. These checkpoints were initially trained using TensorFlow and were converted using `convert_chkpt_tf2pytorch.py`. Provided checkpoints either are either trained for segmentation alone or for simultaneous segmentation and classification. Note, we do not provide a segmentation and classification model for CPM17 and Kumar because classification labels aren't available.
-
-**IMPORTANT:** CoNSeP, Kumar and CPM17 checkpoints use the original model mode, whereas PanNuke and MoNuSAC use the fast model mode. Refer to the inference instructions below for more information. 
+These checkpoints were initially trained using TensorFlow and were converted using `convert_chkpt_tf2pytorch.py`. Provided checkpoints are trained for simultaneous segmentation and classification.
 
 Segmentation and Classification:
 - [CoNSeP checkpoint](https://drive.google.com/file/d/1FtoTDDnuZShZmQujjaFSLVJLD5sAh2_P/view?usp=sharing)
 - [PanNuke checkpoint](https://drive.google.com/file/d/1SbSArI3KOOWHxRlxnjchO7_MbWzB4lNR/view?usp=sharing)
 - [MoNuSAC checkpoint](https://drive.google.com/file/d/13qkxDqv7CUqxN-l5CpeFVmc24mDw6CeV/view?usp=sharing)
 
-Segmentation Only:
-- [CoNSeP checkpoint](https://drive.google.com/file/d/1BF0GIgNGYpfyqEyU0jMsA6MqcUpVQx0b/view?usp=sharing)
-- [Kumar checkpoint](https://drive.google.com/file/d/1NUnO4oQRGL-b0fyzlT8LKZzo6KJD0_6X/view?usp=sharing) 
-- [CPM17 checkpoint](https://drive.google.com/file/d/1lR7yJbEwnF6qP8zu4lrmRPukylw9g-Ms/view?usp=sharing) 
+** These model weights have been accessed from [hovernet_repo_link](https://github.com/vqdang/hover_net) repository. If any of the above models are used, please ensure to cite the paper mentioned in the above stated repository.**
 
-Access the entire checkpoint directory, along with a README on the filename description [here](https://drive.google.com/drive/folders/17IBOqdImvZ7Phe0ZdC5U1vwPFJFkttWp?usp=sharing).
 
-If any of the above checkpoints are used, please ensure to cite the corresponding paper.
-
-### Usage and Options
-
-Usage: <br />
+### Step 3 (HoVer-Net implementation)
 ```
-  run_infer.py [options] [--help] <command> [<args>...]
-  run_infer.py --version
-  run_infer.py (-h | --help)
+python hovernet_wsi.py --hovernet_wsi_output OUTPUT_DIR --segmentation_output_dir SEGMENTATION_DIR --save_patch_overlay True
 ```
+The above command performs the following functionalities :
+* Returns a downsampled image(in png, tiff, jpg format) with demarcated regions of nuclei as well as classification of these nuclei depending upon the model selected by the user.
+* Returns a single csv file containing width, height, centroid coordinates, contour coordinates, probability of a nuclei being of a given type for each nuclei instance.
+* Returns a csv file for each nuclei type containing center coordinates, width, and height of all nuclei belonging to that particular nuclei class. Eg epithelial_df.csv, Macrophage_df.csv, etc.
+* The following may also be returned (optional) : 
+    * png images for each tile with demarcated and classified nuclei region. 
+    * .mat files for each tile containing information about instances of nuclei present in that tile. This file could be further used for training. 
+    * Output tiles in QuPath v0.2.3 compatible format.
 
-Options:
+Basic flags explanation :
+* `--input_wsi_dir` : path to directory containing input wsi
+* `--segmentation_output_dir` : path to the directory having segmentation output created by create_features_fp.py
+* `--hovernet_wsi_output` : path to the directory which will store the output
+* `--patch_size` : patch size (default = 1024)
+* `--level` : level of wsi at which patches will be extracted for the hovernet code
+* `--draw_grid` : If you want a grid on the overlay then enter True else False (default : False)
+* `--save_patch_overlay` : If you want to save the overlay png image of each individual patch then enter True else False (default : False)
+* `--save_mat` : If you want to save a .mat file for each individual patch containing nuclei information then enter True else False (default : True). These files can be helpful for generation of training data.
+
+## Additional details about step 2
+
+**Some parameter templates are availble and can be readily deployed. Some parameter templates are also availble and can be readily deployed as good choices for default parameters:**
+* `bwh_biopsy.csv`: used for segmenting biopsy slides scanned at BWH (Scanned using Hamamatsu S210 and Aperio GT450) 
+* `bwh_resection.csv`: used for segmenting resection slides scanned at BWH
+* `tcga.csv`: used for segmenting TCGA slides
+
+Simply pass the name of the template file to the --preset argument, for example, to use the biopsy template:
 ```
-  -h --help                   Show this string.
-  --version                   Show version.
-
-  --gpu=<id>                  GPU list. [default: 0]
-  --nr_types=<n>              Number of nuclei types to predict. [default: 0]
-  --type_info_path=<path>     Path to a json define mapping between type id, type name, 
-                              and expected overlay color. [default: '']
-
-  --model_path=<path>         Path to saved checkpoint.
-  --model_mode=<mode>         Original HoVer-Net or the reduced version used in PanNuke / MoNuSAC, 'original' or 'fast'. [default: fast]
-  --nr_inference_workers=<n>  Number of workers during inference. [default: 8]
-  --nr_post_proc_workers=<n>  Number of workers during post-processing. [default: 16]
-  --batch_size=<n>            Batch size. [default: 128]
-```
-
-Tile Processing Options: <br />
-```
-   --input_dir=<path>     Path to input data directory. Assumes the files are not nested within directory.
-   --output_dir=<path>    Path to output directory..
-
-   --draw_dot             To draw nuclei centroid on overlay. [default: False]
-   --save_qupath          To optionally output QuPath v0.2.3 compatible format. [default: False]
-   --save_raw_map         To save raw prediction or not. [default: False]
+python create_patches_fp.py --source DATA_DIRECTORY --save_dir SEGMENTATION_DIR --patch_size 1024 --step_size 1024 --seg --patch --stitch --preset bwh_biopsy.csv
 ```
 
-WSI Processing Options: <br />
-```
-    --input_dir=<path>      Path to input data directory. Assumes the files are not nested within directory.
-    --output_dir=<path>     Path to output directory.
-    --cache_path=<path>     Path for cache. Should be placed on SSD with at least 100GB. [default: cache]
-    --mask_dir=<path>       Path to directory containing tissue masks. 
-                            Should have the same name as corresponding WSIs. [default: '']
+Additional flags that can be passed include:
+* `--custom_downsample`: factor for custom downscale (not recommended, ideally should first check if native downsamples exist)
+* `--patch_level`: which downsample pyramid level to extract patches from (default is 0, the highest available resolution)
+* `--no_auto_skip`: by default, the script will skip over files for which patched .h5 files already exist in the desination folder, this toggle can be used to override this behavior
 
-    --proc_mag=<n>          Magnification level (objective power) used for WSI processing. [default: 40]
-    --ambiguous_size=<int>  Define ambiguous region along tiling grid to perform re-post processing. [default: 128]
-    --chunk_shape=<n>       Shape of chunk for processing. [default: 10000]
-    --tile_shape=<n>        Shape of tiles for processing. [default: 2048]
-    --save_thumb            To save thumb. [default: False]
-    --save_mask             To save mask. [default: False]
-```
-
-The above command can be used from the command line or via an executable script. We supply two example executable scripts: one for tile processing and one for WSI processing. To run the scripts, first make them executable by using `chmod +x run_tile.sh` and `chmod +x run_tile.sh`. Then run by using `./run_tile.sh` and `./run_wsi.sh`.
-
-Intermediate results are stored in cache. Therefore ensure that the specified cache location has enough space! Preferably ensure that the cache location is SSD.
-
-Note, it is important to select the correct model mode when running inference. 'original' model mode refers to the method described in the original medical image analysis paper with a 270x270 patch input and 80x80 patch output. 'fast' model mode uses a 256x256 patch input and 164x164 patch output. Model checkpoints trained on Kumar, CPM17 and CoNSeP are from our original publication and therefore the 'original' mode **must** be used. For PanNuke and MoNuSAC, the 'fast' mode **must** be selected. The model mode for each checkpoint that we provide is given in the filename. Also, if using a model trained only for segmentation, `nr_types` must be set to 0.
-
-`type_info.json` is used to specify what RGB colours are used in the overlay. Make sure to modify this for different datasets and if you would like to generally control overlay boundary colours.
-
-As part of our tile processing implementation, we add an option to save the output in a form compatible with QuPath. 
-
-Take a look on how to utilise the output in `examples/usage.ipynb`. 
-
-## Overlaid Segmentation and Classification Prediction
-
-<p float="left">
-  <img src="docs/seg.gif" alt="Segmentation" width="870" />
-</p>
-
-Overlaid results of HoVer-Net trained on the CoNSeP dataset. The colour of the nuclear boundary denotes the type of nucleus. <br />
-Blue: epithelial<br />
-Red: inflammatory <br />
-Green: spindle-shaped <br />
-Cyan: miscellaneous
-
-## Datasets
-
-Download the CoNSeP dataset as used in our paper from [this link](https://warwick.ac.uk/fac/sci/dcs/research/tia/data/hovernet/). <br />
-Download the Kumar, CPM-15, CPM-17 and TNBC datsets from [this link](https://drive.google.com/open?id=1l55cv3DuY-f7-JotDN7N5nbNnjbLWchK).  <br />
-Down
-
-Ground truth files are in `.mat` format, refer to the README included with the datasets for further information. 
-
-## Comparison to Original TensorFlow Implementation
-
-Below we report the difference in segmentation results trained using this repository (PyTorch) and the results reported in the original manuscript (TensorFlow). 
-
-Segmentation results on the Kumar dataset:
-| Platform   | DICE       | PQ         | AJI       |
-| -----------|----------- | -----------|-----------|
-| TensorFlow | 0.8258     | 0.5971     | 0.6412    |
-| PyTorch    | 0.8211     | 0.5904     | 0.6321    |
-
-Segmentation results on CoNSeP dataset: 
-| Platform   | DICE       | PQ         | AJI       |
-| -----------|----------- | -----------|-----------|
-| TensorFlow | 0.8525     | 0.5477     | 0.5995    |
-| PyTorch    | 0.8504     | 0.5464     | 0.6009    |
-
-Checkpoints to reproduce the above results can be found [here](https://drive.google.com/drive/folders/17IBOqdImvZ7Phe0ZdC5U1vwPFJFkttWp?usp=sharing).
-
-Simultaneous Segmentation and Classification results on CoNSeP dataset: 
-| Platform   | F1<sub>d</sub> | F1<sub>e</sub> | F1<sub>i</sub> | F1<sub>s</sub> | F1<sub>m</sub> |
-| -----------|----------------| ---------------|----------------|----------------|----------------|
-| TensorFlow | 0.748          | 0.635          | 0.631          | 0.566          | 0.426          |
-| PyTorch    | 0.756          | 0.636          | 0.559          | 0.557          | 0.348          |
+**To set custom segmentation parameters like seg_level, sthresh, mthresh, use_otsu, close, etc kindly refer [clam_repo_link](https://github.com/mahmoodlab/CLAM) where setting cutom parameters for segmentation has been explained in detail**
 
 
-## Citation
+The command of step 2 will segment every wsi in DATA_DIRECTORY using default parameters, extract all patches within the segemnted tissue regions, create a stitched reconstruction for each slide using its extracted patches (optional) and generate the following folder structure at the specified segmentation_output_dir:
 
-If any part of this code is used, please give appropriate citation to our paper. <br />
-
-BibTex entry: <br />
-```
-@article{graham2019hover,
-  title={Hover-net: Simultaneous segmentation and classification of nuclei in multi-tissue histology images},
-  author={Graham, Simon and Vu, Quoc Dang and Raza, Shan E Ahmed and Azam, Ayesha and Tsang, Yee Wah and Kwak, Jin Tae and Rajpoot, Nasir},
-  journal={Medical Image Analysis},
-  pages={101563},
-  year={2019},
-  publisher={Elsevier}
-}
+```bash
+segmentation_output_dir/
+	├── masks
+    		├── wsi_1.png
+    		├── wsi_2.png
+    		└── ...
+	├── patches
+    		├── wsi_1.h5
+    		├── wsi_2.h5
+    		└── ...
+	├── stitches
+    		├── wsi_1.png
+    		├── wsi_1.png
+    		└── ...
+	└── process_list_autogen.csv
 ```
 
-## Authors
+The masks folder contains the segmentation results (one image per slide). The patches folder contains arrays of extracted tissue patches from each slide (one .h5 file per slide, where each entry corresponds to the coordinates of the top-left corner of a patch) The stitches folder contains downsampled visualizations of stitched tissue patches (one image per slide) (Optional, not used for downstream tasks) The auto-generated csv file process_list_autogen.csv contains a list of all slides processed, along with their segmentation/patching parameters used.
 
-* [Quoc Dang Vu](https://github.com/vqdang)
-* [Simon Graham](https://github.com/simongraham)
+## Output
 
-## License
+**The link to the Output folder: [Output_Folder_Link](https://drive.google.com/drive/folders/1idQoOWAeYXjmzooFi1-rDNNb5EcAtlKg?usp=sharing)**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+Structure of the output folder containing csv, mat, tsv, and json files with spatial nuclear information of each type of nuclei class and png, jpg, and tif files with segmented output images:
+```bash
+Output/
+    ├── Segmentation_Output
+            ├── InputWSIName(Eg. C3L-01663-21)
+                    ├── (This output directory is explained in the previous )
+	├── wsi_output
+    		├── InputWSIName(Eg. C3L-01663-21)
+            |
+            ├── InputWSIName_overlayed.jpg (Eg. C3L-01663-21_overlayed.jpg, jpg segmentated wsi image)
+            |
+            ├── InputWSIName_overlayed.png (Eg. C3L-01663-21_overlayed.png, png segmentated wsi image)
+            |
+            ├── InputWSIName_overlayed.tif (Eg. C3L-01663-21_overlayed.tif, tif segmentated wsi image)
+            |
+            ├── mat 
+                 ├── patch_0.mat
+                 ├── patch_1.mat
+                 ├── ...    
+            ├── qupath
+                 ├── patch_0.tsv
+                 ├── patch_1.tsv
+                 ├── ...  
+            ├── json 
+                 ├── patch_0.json
+                 ├── patch_1.json
+                 ├── ...                        
+            ├── overlay
+                 ├── patch_0.png
+                 ├── patch_1.png
+                 ├── ... 
+            └── wsi_info
+                 ├── InputWSIName_json.json
+                 ├── nuclei_type1_df.csv (Eg. Lymphocyte_df.csv)
+                 ├── nuclei_type2_df.csv (Eg. Neutrophil_df.csv) 
+                 ├── nuclei_type3_df.csv (Eg. epithelial_df.csv)     
+                 ├── nuclei_type4_df.csv (Eg. Macrophage_df.csv)
+                 ├── ...
+                 └── patch_coordinates.csv
 
-Note that the PanNuke dataset is licensed under [Attribution-NonCommercial-ShareAlike 4.0 International](http://creativecommons.org/licenses/by-nc-sa/4.0/), therefore the derived weights for HoVer-Net are also shared under the same license. Please consider the implications of using the weights under this license on your work and it's licensing. 
+```
+* mat: contains matlab files with nuclear spatial information for each tile(patch of size patch_size*patch_size). These files could be used for training the nuclear instance segmentation and classification models. To avoid storing these files, pass the save_mat flag in hovernet_wsi.py as False in hovernet_wsi.py
+
+* overlay: contains overlay of nuclear boundaries on top of original RGB tiles for each tile(patch of size patch_size*patch_size). To avoid storing these files, pass the save_patch_overlay flag in hovernet_wsi.py as False in hovernet_wsi.py
+
+* json: contains the information of the (centroid coordinates, contour coordinates, nuclei type, nuclei type probability) for each detected nuclei in a tile for each tile.
+
+* wsi_info: 
+    * InputWSIName_json.json: Eg. C3L-01663-21_json.json, contains the information of the (centroid coordinates, contour coordinates, nuclei type, nuclei type probability) for each detected nuclei in the WSI.
+    * nuclei_type1_df.csv: Eg. Lymphocyte_df.csv, would contain the centroid coordinates, height, and width of all detected nucleui of type1(eg. Lymphocyte) in the WSI.
+    * patch_coordinates.csv: contains the bounding box coordinates of each tile of the WSI. 
+
+## Visualizing Output
+The files mentioned below are present in the Visualization folder.
+
+* See nuclei distribution and spatial data visualization by pannuke pretrained model: Visualization_pannuke.ipynb
+
+* See nuclei distribution and spatial data visualization by MoNuSac pretrained model: Visualization_MoNuSac.ipynb
+
+* wsi_file_path and dataframes_path are required to be passed in the 3rd and 4th cell of the ipynb notebook. After doing so the cells of the notebook can be executed to show inference visualization.
+    * wsi_file_path : Path to the original wsi file in svs format.
+    * dataframes_path : Path to the wsi_info folder created as an output for a particular wsi containing csv and json files
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
