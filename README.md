@@ -9,22 +9,22 @@ CLAM(Clustering-constrained Attention Multiple Instance Learning) codebase to id
 <!-- | Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
 | ------------- | ------------- |
 
-| <img src ="C3L-01663-21_original.png" width="360" height="510" />  | <img src ="C3L-01663-21_overlayed.png" width="360" height="510" />  | -->
+| <img src ="C3L-01663-21_original.png" width="510" height="510" />  | <img src ="C3L-01663-21_overlayed.png" width="510" height="510" />  | -->
 
 <!-- |  | Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage |
 | Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
 <p float="left">
-<img src ="C3L-01663-21_original.png" width="360" height="510" />
-<img src ="C3L-01663-21_overlayed.png" width="360" height="510" />
+<img src ="C3L-01663-21_original.png" width="510" height="510" />
+<img src ="C3L-01663-21_overlayed.png" width="510" height="510" />
 </p> -->
 
 Sample Input WSI Image:
 
-<img src ="C3L-01663-21_original.png" width="360" height="510" />
+<img src ="C3L-01663-21_original.png" width="540" height="765" />
 
 Sample Output WSI image with different types of nuclei demarcated with different colors(Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage):
 
-<img src ="C3L-01663-21_overlayed.png" width="360" height="510" />
+<img src ="C3L-01663-21_overlayed.png" width="540" height="765" />
 
 ## Creating Environment
 
@@ -226,13 +226,60 @@ The files mentioned below are present in the Visualization folder.
     * wsi_file_path : Path to the original wsi file in svs format.
     * dataframes_path : Path to the wsi_info folder created as an output for a particular wsi containing csv and json files
 
-Sample visualization of nuclei spatial distribution data:
+Sample visualizations of nuclei spatial distribution data on C3L-01663-21 WSI (in Data/WSI/):
 
 <!-- <p float="left">
-<img src ="C3L-01663-21_original.png" width="360" height="510" />
-<img src ="C3L-01663-21_overlayed.png" width="360" height="510" />
-</p> --> -->
+<img src ="C3L-01663-21_original.png" width="510" height="510" />
+<img src ="C3L-01663-21_overlayed.png" width="510" height="510" />
+</p> -->
 
+<!-- | Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
+| ------------- | ------------- |
+
+| <img src ="C3L-01663-21_original.png" width="510" height="510" />  | <img src ="C3L-01663-21_overlayed.png" width="510" height="510" />  | -->
+
+<!-- |  | Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage |
+| Sample Input WSI Image  | Sample Output WSI image with different types of nuclei demarcated with different colors |
+<p float="left">
+<img src ="C3L-01663-21_original.png" width="510" height="510" />
+<img src ="C3L-01663-21_overlayed.png" width="510" height="510" />
+</p> -->
+
+
+* Pie chart illustrating the numeric share of different nuclei types:
+<img src = "Visualization/PieChart_NucleiDistribution.png" width="540" height="300" />
+
+* Box plots depicting the variation of width and height of different nuclei types:
+<p float="left">
+<img src = "Visualization/NucleiHeightBoxPlot.png" width="360" height="160" />
+<img src = "Visualization/NucleiWidthBoxPlot.png" width="360" height="160" />
+</p> 
+
+* Plots depicting the variation of widths and heights of each nuclei types:
+<p float="left">
+<img src = "Visualization/Epithelial_HeightWidth_ScatterBoxPlot.png" width="360" height="160" /> 
+<img src = "Visualization/Lymphocyte_HeightWidth_ScatterBoxPlot.png" width="360" height="160"/> 
+</p>    
+<p float="left">     
+<img src = "Visualization/Macrophage_HeightWidth_ScatterBoxPlot.png" width="360" height="160" />           
+<img src = "Visualization/Neutrophil_HeightWidth_ScatterBoxPlot.png" width="360" height="160" />
+</p>    
+
+* Spatial Nuclei distribution of different types of nuclei
+<img src = "Visualization/SpatialNucleiDistribution.png" width="510" height="510" />
+
+* Spatial Nuclei distribution of each nuclei subtype
+<p float="left">
+<img src = "Visualization/EpithelialNucleiDistribution.png" width="360" height="360" />  
+<img src = "Visualization/LymphocyteNucleiDistribution.png" width="360" height="360" />  
+</p>  
+<p float="left">                           
+<img src = "Visualization/MacrophageNucleiDistribution.png" width="360" height="360" />           
+<img src = "Visualization/NeutrophilNucleiDistribution.png" width="360" height="360" />      
+</p>       
+  
+* Magnified view of a patch of a WSI (Red: Epithelial; Yellow: Neutrophil; Green: Lymphocyte; Blue: Macrophage):
+<img src = "Visualization/PatchWSI.png" width="720" height="430" />
 
 
 
